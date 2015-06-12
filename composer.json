@@ -1,0 +1,26 @@
+{
+  "require": {
+  },
+  "require-dev": {
+    "symfony/var-dumper": "*",
+    "phpunit/phpunit": "4.1.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Foccy\\": "framework/Foccy/",
+      "": "src/",
+      "Test\\": "framework/Test/"
+    },
+    "files": [
+    ]
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url":  "http://composer-proxy.jp/proxy/packagist"
+    },
+    {
+      "packagist": false
+    }
+  ]
+}
