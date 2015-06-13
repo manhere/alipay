@@ -5,7 +5,7 @@ namespace Foccy\Alipay\Exception;
 
 use Exception;
 
-class HttpException extends \Exception
+class HttpException extends AlipayException
 {
 
     /**
