@@ -2,3 +2,4 @@
 vendor/
 composer.lock
 public/index.php
+cacert.pem

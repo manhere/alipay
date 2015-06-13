@@ -10,6 +10,8 @@ interface HttpClientInterface
     const METHOD_GET = 'GET';
 
     /**
+     * Make request.
+     *
      * @param string $url
      * @param string $method
      * @param array $data

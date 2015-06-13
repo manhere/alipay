@@ -8,14 +8,9 @@ use Foccy\Alipay\Exception\HttpException;
 class CurlHttpClient implements HttpClientInterface
 {
 
-    protected $CACertPath;
-
-    public function __construct($CACertPath)
-    {
-        $this->CACertPath = $CACertPath;
-    }
-
     /**
+     * Make request.
+     *
      * @param string $url
      * @param string $method
      * @param array $data
@@ -40,9 +35,8 @@ class CurlHttpClient implements HttpClientInterface
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, $this->CACertPath);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         $body = curl_exec($ch);
         $info = curl_getinfo($ch);
@@ -50,12 +44,18 @@ class CurlHttpClient implements HttpClientInterface
         if ($code === 200) {
             return $body;
         } else {
-            $error = curl_error($ch);
+            $error = curl_errno($ch);
             $msg = curl_error($ch);
             throw new HttpException($code, sprintf('%s %s', $error, $msg));
         }
     }
 
+    /**
+     * Build query string.
+     *
+     * @param array $params
+     * @return string
+     */
     protected function buildQuery(array $params)
     {
         $segments = [];
