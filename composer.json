@@ -1,4 +1,9 @@
 {
+  "name": "foccy/alipay",
+  "description": "Alipay payment library.",
+  "require": {
+    "php": ">=5.4.0"
+  },
   "require": {
   },
   "require-dev": {

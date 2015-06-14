@@ -24,10 +24,10 @@ $url = $webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'ht
 
 ## 手机网站版
 ```php
-$webPayment = new \Foccy\Alipay\DirectWapPayByUser(
+$wapPayment = new \Foccy\Alipay\DirectWapPayByUser(
     $alipay,
     $signer
 );
 
-$url = $webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php');
+$url = $wapPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php');
 ```
