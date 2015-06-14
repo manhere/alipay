@@ -4,8 +4,6 @@
   "require": {
     "php": ">=5.4.0"
   },
-  "require": {
-  },
   "require-dev": {
     "symfony/var-dumper": "*",
     "phpunit/phpunit": "4.1.*"
