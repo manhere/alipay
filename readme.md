@@ -19,7 +19,7 @@ $webPayment = new \Foccy\Alipay\DirectPayByUser(
     $signer
 );
 
-$webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php', 'bankname')
+$url = $webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php', 'bankname')
 ```
 
 ## 手机网站版
@@ -29,5 +29,5 @@ $webPayment = new \Foccy\Alipay\DirectWapPayByUser(
     $signer
 );
 
-$webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php')
+$url = $webPayment->createPaymentUrl('order_number', 'product_name', '0.01', 'http://www.foo.com/notify.php', 'http://www.foo.com/return.php')
 ```
