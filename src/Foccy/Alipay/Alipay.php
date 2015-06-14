@@ -22,13 +22,6 @@ class Alipay
     protected $sellerEmail;
 
     /**
-     * 支付宝证书路径
-     *
-     * @var string
-     */
-    protected $CACertPath;
-
-    /**
      * HTTP 通讯类
      *
      * @var HttpClientInterface
@@ -40,13 +33,11 @@ class Alipay
      *
      * @param string $partner
      * @param string $sellerEmail
-     * @param string $CACertPath
      */
-    public function __construct($partner, $sellerEmail, $CACertPath)
+    public function __construct($partner, $sellerEmail)
     {
         $this->partner = $partner;
         $this->sellerEmail = $sellerEmail;
-        $this->CACertPath = $CACertPath;
     }
 
     /**
@@ -67,16 +58,6 @@ class Alipay
     public function getSellerEmail()
     {
         return $this->sellerEmail;
-    }
-
-    /**
-     * 获取支付宝证书路径
-     *
-     * @return string
-     */
-    public function getCACertPath()
-    {
-        return $this->CACertPath;
     }
 
     /**
@@ -130,7 +111,7 @@ class Alipay
     public function getHttpClient()
     {
         if (is_null($this->httpClient)) {
-            $this->httpClient = new CurlHttpClient($this->CACertPath);
+            $this->httpClient = new CurlHttpClient();
         }
         return $this->httpClient;
     }

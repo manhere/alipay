@@ -7,7 +7,7 @@ namespace Foccy\Alipay;
 use Foccy\Alipay\Exception\AlipayException;
 use Foccy\Alipay\Signer\SignerInterface;
 
-class WebPayment
+class DirectWapTrade
 {
 
     /**
@@ -20,7 +20,7 @@ class WebPayment
      *
      * @var string
      */
-    protected $gatewayUrl = 'https://mapi.alipay.com/gateway.do?';
+    protected $gatewayUrl = 'http://wappaygw.alipay.com/service/rest.htm?';
 
     /**
      * 支付宝通知验证地址
@@ -55,32 +55,42 @@ class WebPayment
      * @param string $notifyUrl
      * @param string $returnUrl
      * @return string string
-     * @param string $bank
      * @throws AlipayException
      */
-    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $bank = '')
+    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl)
     {
-        $params = array(
-            'service' =>'create_direct_pay_by_user',
-            'payment_type' =>'1',
-            '_input_charset' =>'utf-8',
-            'notify_url' => $notifyUrl,
-            'return_url' => $returnUrl,
+        $signType = $this->signer->getSignType();
+        if ($signType === 'RSA') {
+            $signType = '0001';
+        }
+        $params = [
             'partner' => $this->alipay->getPartner(),
             'seller_email' => $this->alipay->getSellerEmail(),
             'out_trade_no' => $outTradeNo,
             'subject' => $subject,
             'total_fee' => $fee,
-        );
-        if ($bank) {
-            $params['paymethod'] = 'bankPay';
-            $params['defaultbank'] = $bank;
-        }
-        $params = $this->alipay->sortParams($params);
-        $params = $this->alipay->filterParams($params);
+            "sec_id" => $signType,
+            "format" => 'xml',
+            "v"	=> '2.0',
+            "req_id" => date('Ymdhis'),
+            "_input_charset" => 'utf-8',
+            'notify_url'=> $notifyUrl,
+            'return_url'=> $returnUrl,
+        ];
+        $token = $this->getRequestToken($params);
+        $reqData = '<auth_and_execute_req><request_token>' . $token . '</request_token></auth_and_execute_req>';
+        $params = $this->alipay->sortParams([
+            "service" => 'alipay.wap.auth.authAndExecute',
+            "partner" => $params['partner'],
+            "sec_id" => $params['sec_id'],
+            "format" => $params['format'],
+            "v"	=> $params['v'],
+            "req_id" => $params['req_id'],
+            "req_data" => $reqData,
+            "_input_charset" => $params['_input_charset'],
+        ]);
         $sign = $this->signer->sign($this->alipay->createParamUrl($params));
         $params['sign'] = $sign;
-        $params['sign_type'] = $this->signer->getSignType();
         return $this->gatewayUrl . $this->alipay->createParamUrl($params, true);
     }
 
@@ -92,18 +102,17 @@ class WebPayment
      */
     public function verifyReturn(array $data)
     {
-        if (empty($data) || !isset($data['sign'])) {
+        if(empty($data)) {
             return false;
         }
-        $sign = $data['sign'];
-        $isVerified = $this->signer->verify($this->alipay->createParamUrl($this->alipay->sortParams($this->alipay->filterParams($data))), $sign);
-        if ($isVerified) {
-            if (empty($data['notify_id'])) {
-                return true;
-            }
-            $verify_url = $this->verifyUrl . "partner=" . $this->alipay->getPartner() . "&notify_id=" . $data["notify_id"];
-            $responseTxt = $this->alipay->getHttpClient()->executeHttpRequest($verify_url);
-            return (bool)preg_match("/true$/i",$responseTxt);
+
+        if (isset($data['result']) && $data['result'] === 'success') {
+            $sign = $data["sign"];
+            $params = $this->alipay->filterParams($data);
+            $params = $this->alipay->sortParams($params);
+            $str = $this->alipay->createParamUrl($params);
+
+            return $this->signer->verify($str, $sign);
         }
         return false;
     }
@@ -116,7 +125,36 @@ class WebPayment
      */
     public function verifyNotify(array $data)
     {
-        return $this->verifyReturn($data);
+        if(empty($data)) {
+            return false;
+        }
+
+        $sign = $data["sign"];
+        $params = $this->alipay->filterParams($data);
+        $verifiedParams = [];
+        $verifiedParams['service'] = $params['service'];
+        $verifiedParams['v'] = $params['v'];
+        $verifiedParams['sec_id'] = $params['sec_id'];
+        $verifiedParams['notify_data'] = $params['notify_data'];
+
+        $str = $this->alipay->createParamUrl($verifiedParams);
+        if ($this->signer->verify($str, $sign)) {
+            $doc = new \DOMDocument();
+            $doc->loadXML($data['notify_data']);
+
+            $tradeStatus = $doc->getElementsByTagName('trade_status')->item(0)->nodeValue;
+
+            if ($tradeStatus === 'TRADE_FINISHED' || $tradeStatus === 'TRADE_SUCCESS') {
+                $notify_id = $doc->getElementsByTagName( "notify_id" )->item(0)->nodeValue;
+                if (!empty($notify_id)) {
+                    $verify_url = $this->verifyUrl . "partner=" . $this->alipay->getPartner() . "&notify_id=" . $notify_id;
+                    $responseTxt = $this->alipay->getHttpClient()->executeHttpRequest($verify_url);
+                    return (bool)preg_match("/true$/i",$responseTxt);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -158,16 +196,16 @@ class WebPayment
      */
     protected function getRequestToken(array $params)
     {
-        $requestData = '<direct_trade_create_req><notify_url>' . $params['notify_url'] . '</notify_url><call_back_url>' . $params['return_url'] . '</call_back_url><seller_account_name>' . $params['seller_email'] . '</seller_account_name><out_trade_no>' . $params['out_trade_no'] . '</out_trade_no><subject>' . $params['subject'] . '</subject><total_fee>' . $params['total_fee'] . '</total_fee><merchant_url>' . $params['merchant_url'] . '</merchant_url></direct_trade_create_req>';
+        $requestData = '<direct_trade_create_req><notify_url>' . $params['notify_url'] . '</notify_url><call_back_url>' . $params['return_url'] . '</call_back_url><seller_account_name>' . $params['seller_email'] . '</seller_account_name><out_trade_no>' . $params['out_trade_no'] . '</out_trade_no><subject>' . $params['subject'] . '</subject><total_fee>' . $params['total_fee'] . '</total_fee></direct_trade_create_req>';
         $params = $this->alipay->sortParams([
             "service" => 'alipay.wap.trade.create.direct',
             "partner" => $params['partner'],
             "sec_id" => $params['sec_id'],
             "format" => $params['format'],
             "v"	=> $params['v'],
-            "req_id"	=> $params['req_id'],
-            "req_data"	=> $requestData,
-            "_input_charset"	=> $params['_input_charset'],
+            "req_id" => $params['req_id'],
+            "req_data" => $requestData,
+            "_input_charset" => $params['_input_charset'],
         ]);
         $params['sign'] = $this->signer->sign($this->alipay->createParamUrl($params));
         $result = $this->alipay->getHttpClient()->executeHttpRequest($this->gatewayUrl, 'POST', $params);
