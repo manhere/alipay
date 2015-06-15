@@ -15,13 +15,6 @@ class Alipay
     protected $partner;
 
     /**
-     * 合作伙伴 e-mail foo@exmaple.com
-     *
-     * @var string
-     */
-    protected $sellerEmail;
-
-    /**
      * HTTP 通讯类
      *
      * @var HttpClientInterface
@@ -32,12 +25,10 @@ class Alipay
      * 新建实例
      *
      * @param string $partner
-     * @param string $sellerEmail
      */
-    public function __construct($partner, $sellerEmail)
+    public function __construct($partner)
     {
         $this->partner = $partner;
-        $this->sellerEmail = $sellerEmail;
     }
 
     /**
@@ -48,16 +39,6 @@ class Alipay
     public function getPartner()
     {
         return $this->partner;
-    }
-
-    /**
-     * 获取卖家Email
-     *
-     * @return string
-     */
-    public function getSellerEmail()
-    {
-        return $this->sellerEmail;
     }
 
     /**

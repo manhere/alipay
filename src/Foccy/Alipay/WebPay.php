@@ -7,7 +7,7 @@ namespace Foccy\Alipay;
 use Foccy\Alipay\Exception\AlipayException;
 use Foccy\Alipay\Signer\SignerInterface;
 
-class DirectWapPayByUser
+class WebPay
 {
 
     /**
@@ -55,22 +55,26 @@ class DirectWapPayByUser
      * @param string $notifyUrl
      * @param string $returnUrl
      * @return string string
+     * @param string $bank
      * @throws AlipayException
      */
-    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl)
+    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $bank = '')
     {
         $params = array(
-            'service' =>'alipay.wap.create.direct.pay.by.user',
-            'payment_type' =>'1',
+            'service' =>'create_direct_pay_by_user',
+            'partner' => $this->alipay->getPartner(),
             '_input_charset' =>'utf-8',
             'notify_url' => $notifyUrl,
             'return_url' => $returnUrl,
-            'partner' => $this->alipay->getPartner(),
             'seller_id' => $this->alipay->getPartner(),
             'out_trade_no' => $outTradeNo,
             'subject' => $subject,
+            'payment_type' =>'1',
             'total_fee' => $fee,
         );
+        if ($bank) {
+            $params['defaultbank'] = $bank;
+        }
         $params = $this->alipay->sortParams($params);
         $params = $this->alipay->filterParams($params);
         $sign = $this->signer->sign($this->alipay->createParamUrl($params));
