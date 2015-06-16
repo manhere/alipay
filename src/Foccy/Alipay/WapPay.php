@@ -85,7 +85,7 @@ class WapPay
      * @param array $data
      * @return bool
      */
-    public function verifyReturn(array $data)
+    public function verify(array $data)
     {
         if (empty($data) || !isset($data['sign'])) {
             return false;
@@ -98,20 +98,9 @@ class WapPay
             }
             $verify_url = $this->verifyUrl . "partner=" . $this->alipay->getPartner() . "&notify_id=" . $data["notify_id"];
             $responseTxt = $this->alipay->getHttpClient()->executeHttpRequest($verify_url);
-            return (bool)preg_match("/true$/i",$responseTxt);
+            return $responseTxt === 'true';
         }
         return false;
-    }
-
-    /**
-     * Verify the notify data.
-     *
-     * @param array $data
-     * @return bool
-     */
-    public function verifyNotify(array $data)
-    {
-        return $this->verifyReturn($data);
     }
 
     /**
