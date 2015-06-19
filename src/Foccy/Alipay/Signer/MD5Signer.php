@@ -54,7 +54,7 @@ class MD5Signer implements SignerInterface
      */
     public function getSignType()
     {
-        return 'MD5';
+        return self::TYPE_MD5;
     }
 
 }

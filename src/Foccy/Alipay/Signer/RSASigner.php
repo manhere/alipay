@@ -57,7 +57,7 @@ class RSASigner implements SignerInterface
      */
     public function getSignType()
     {
-        return 'RSA';
+        return self::TYPE_RSA;
     }
 
 

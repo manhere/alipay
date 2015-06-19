@@ -6,6 +6,10 @@ namespace Foccy\Alipay\Signer;
 interface SignerInterface
 {
 
+    const TYPE_MD5 = 'MD5';
+
+    const TYPE_RSA = 'RSA';
+
     /**
      * Sign the raw data.
      *
