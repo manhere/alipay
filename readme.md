@@ -54,6 +54,7 @@ $url = $webPay->createPaymentUrl('order_number', 'product_name', '0.01', 'http:/
 ```
 
 ### 手机网页版
+生成支付链接接口
 ```php
 public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $signType = SignerInterface::TYPE_MD5);
 ```
