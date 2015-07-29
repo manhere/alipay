@@ -30,20 +30,13 @@ class WapPay
     protected $verifyUrl = 'http://notify.alipay.com/trade/notify_query.do?';
 
     /**
-     * @var Signer\SignerInterface
-     */
-    protected $signer;
-
-    /**
      * Create a new instance.
      *
      * @param Alipay $alipay
-     * @param SignerInterface $signer
      */
-    public function __construct(Alipay $alipay, SignerInterface $signer)
+    public function __construct(Alipay $alipay)
     {
         $this->alipay = $alipay;
-        $this->signer = $signer;
     }
 
     /**
@@ -54,10 +47,11 @@ class WapPay
      * @param string $fee
      * @param string $notifyUrl
      * @param string $returnUrl
+     * @param string $signType
      * @return string string
      * @throws AlipayException
      */
-    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl)
+    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $signType = SignerInterface::TYPE_MD5)
     {
         $params = array(
             'service' =>'alipay.wap.create.direct.pay.by.user',
@@ -73,9 +67,9 @@ class WapPay
         );
         $params = $this->alipay->sortParams($params);
         $params = $this->alipay->filterParams($params);
-        $sign = $this->signer->sign($this->alipay->createParamUrl($params));
+        $sign = $this->alipay->getSigner($signType)->sign($this->alipay->createParamUrl($params));
         $params['sign'] = $sign;
-        $params['sign_type'] = $this->signer->getSignType();
+        $params['sign_type'] = $signType;
         return $this->gatewayUrl . $this->alipay->createParamUrl($params, true);
     }
 
@@ -87,11 +81,12 @@ class WapPay
      */
     public function verify(array $data)
     {
-        if (empty($data) || !isset($data['sign'])) {
+        if (empty($data) || !isset($data['sign']) || !isset($data['sign_type'])) {
             return false;
         }
         $sign = $data['sign'];
-        $isVerified = $this->signer->verify($this->alipay->createParamUrl($this->alipay->sortParams($this->alipay->filterParams($data))), $sign);
+        $signType = $data['sign_type'];
+        $isVerified = $this->alipay->getSigner($signType)->verify($this->alipay->createParamUrl($this->alipay->sortParams($this->alipay->filterParams($data))), $sign);
         if ($isVerified) {
             if (empty($data['notify_id'])) {
                 return true;
@@ -121,53 +116,6 @@ class WapPay
     public function setVerifyUrl($verifyUrl)
     {
         $this->verifyUrl = $verifyUrl;
-    }
-
-    /**
-     * Set the parameter signer.
-     *
-     * @param SignerInterface $signer
-     */
-    public function setSigner(SignerInterface $signer)
-    {
-        $this->signer = $signer;
-    }
-
-    /**
-     * Get the request token from the alipay gateway.
-     *
-     * @param array $params
-     * @return string
-     * @throws AlipayException
-     */
-    protected function getRequestToken(array $params)
-    {
-        $requestData = '<direct_trade_create_req><notify_url>' . $params['notify_url'] . '</notify_url><call_back_url>' . $params['return_url'] . '</call_back_url><seller_account_name>' . $params['seller_email'] . '</seller_account_name><out_trade_no>' . $params['out_trade_no'] . '</out_trade_no><subject>' . $params['subject'] . '</subject><total_fee>' . $params['total_fee'] . '</total_fee><merchant_url>' . $params['merchant_url'] . '</merchant_url></direct_trade_create_req>';
-        $params = $this->alipay->sortParams([
-            "service" => 'alipay.wap.trade.create.direct',
-            "partner" => $params['partner'],
-            "sec_id" => $params['sec_id'],
-            "format" => $params['format'],
-            "v"	=> $params['v'],
-            "req_id"	=> $params['req_id'],
-            "req_data"	=> $requestData,
-            "_input_charset"	=> $params['_input_charset'],
-        ]);
-        $params['sign'] = $this->signer->sign($this->alipay->createParamUrl($params));
-        $result = $this->alipay->getHttpClient()->executeHttpRequest($this->gatewayUrl, 'POST', $params);
-        $resultParams = [];
-        foreach (explode('&', urldecode($result)) as $data) {
-            list($key, $value) = explode('=', $data, 2);
-            $resultParams[$key] = $value;
-        }
-        if (isset($resultParams['res_data'])) {
-            $doc = new \DOMDocument();
-            $doc->loadXML($resultParams['res_data']);
-            $token = $doc->getElementsByTagName('request_token')->item(0)->nodeValue;
-            return $token;
-        } else {
-            throw new AlipayException($resultParams['res_error']);
-        }
     }
 
 }

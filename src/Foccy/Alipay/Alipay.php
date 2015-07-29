@@ -4,6 +4,9 @@
 namespace Foccy\Alipay;
 
 
+use Foccy\Alipay\Exception\AlipayException;
+use Foccy\Alipay\Signer\SignerInterface;
+
 class Alipay
 {
 
@@ -22,13 +25,51 @@ class Alipay
     protected $httpClient;
 
     /**
+     * 签名类
+     *
+     * @var Signer\SignerInterface[]
+     */
+    protected $signers = [];
+
+    /**
      * 新建实例
      *
      * @param string $partner
+     * @param SignerInterface[] $signers
      */
-    public function __construct($partner)
+    public function __construct($partner, $signers = [])
     {
         $this->partner = $partner;
+        foreach ((array)$signers as $signer) {
+            $this->addSigner($signer);
+        }
+    }
+
+    /**
+     * Add a signer.
+     *
+     * @param SignerInterface $signer
+     * @return $this
+     */
+    public function addSigner(SignerInterface $signer)
+    {
+        $this->signers[$signer->getSignType()] = $signer;
+        return $this;
+    }
+
+    /**
+     * Get the signer by signer type.
+     *
+     * @param string $signType
+     * @return SignerInterface
+     * @throws AlipayException
+     */
+    public function getSigner($signType)
+    {
+        if (isset($this->signers[$signType])) {
+            return $this->signers[$signType];
+        }
+        throw new AlipayException(sprintf('Signer type [%s] not found.', $signType));
     }
 
     /**
