@@ -18,13 +18,6 @@ class Alipay
     protected $partner;
 
     /**
-     * HTTP 通讯类
-     *
-     * @var HttpClientInterface
-     */
-    protected $httpClient;
-
-    /**
      * 签名类
      *
      * @var Signer\SignerInterface[]
@@ -32,17 +25,20 @@ class Alipay
     protected $signers = [];
 
     /**
+     * 支付类实例 WebPay|WapPay
+     *
+     * @var array
+     */
+    protected $payInstances = [];
+
+    /**
      * 新建实例
      *
      * @param string $partner
-     * @param SignerInterface[] $signers
      */
-    public function __construct($partner, $signers = [])
+    public function __construct($partner)
     {
         $this->partner = $partner;
-        foreach ((array)$signers as $signer) {
-            $this->addSigner($signer);
-        }
     }
 
     /**
@@ -83,69 +79,47 @@ class Alipay
     }
 
     /**
-     * 排序参数
+     * 获取WebPay实例
      *
-     * @param array $params
-     * @return array
+     * @return WebPay
      */
-    public function sortParams(array $params)
+    public function getWebPay()
     {
-        ksort($params);
-        reset($params);
-        return $params;
-    }
-
-    /**
-     * 过滤签名参数和空参数
-     *
-     * @param array $params
-     * @return array
-     */
-    public function filterParams(array $params)
-    {
-        unset($params['sign']);
-        unset($params['sign_type']);
-        return array_filter($params);
-    }
-
-    /**
-     * 根据参数生成url
-     *
-     * @param array $params
-     * @param bool $encoded
-     * @return string
-     */
-    public function createParamUrl(array $params, $encoded = false)
-    {
-        $combinedParams = [];
-        foreach ($params as $key => $val) {
-            $combinedParams[] = implode('=', [$key, $encoded ? urlencode($val) : $val]);
+        $key = __METHOD__;
+        if (!isset($this->payInstances[$key])) {
+            $this->payInstances[$key] = new WebPay($this);
         }
-        $url = implode('&', $combinedParams);
-        return $url;
+        return $this->payInstances[$key];
     }
 
     /**
-     * 获取HTTP通讯实例
+     * 获取WapPay实例
      *
-     * @return HttpClientInterface
+     * @return WapPay
      */
-    public function getHttpClient()
+    public function getWapPay()
     {
-        if (is_null($this->httpClient)) {
-            $this->httpClient = new CurlHttpClient();
+        $key = __METHOD__;
+        if (!isset($this->payInstances[$key])) {
+            $this->payInstances[$key] = new WapPay($this);
         }
-        return $this->httpClient;
+        return $this->payInstances[$key];
     }
 
     /**
-     * 设置HTTP通讯实例
+     * 生成Alipay实例
      *
-     * @param HttpClientInterface $httpClient
+     * @param string $partner
+     * @param array $signers
+     * @return static
      */
-    public function setHttpClient(HttpClientInterface $httpClient)
+    public static function create($partner, $signers = [])
     {
-        $this->httpClient = $httpClient;
+        $alipay = new static($partner);
+        foreach ((array)$signers as $signer) {
+            $alipay->addSigner($signer);
+        }
+        return $alipay;
     }
 
 }

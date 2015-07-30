@@ -52,29 +52,30 @@ class WebPay
      * @param string $signType
      * @throws AlipayException
      */
-    public function createPaymentUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $bank = '', $signType = SignerInterface::TYPE_MD5)
+    public function createUrl($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl, $bank = '', $signType = SignerInterface::TYPE_MD5)
     {
         $params = array(
             'service' =>'create_direct_pay_by_user',
             'partner' => $this->alipay->getPartner(),
+            'payment_type' =>'1',
             '_input_charset' =>'utf-8',
             'notify_url' => $notifyUrl,
             'return_url' => $returnUrl,
             'seller_id' => $this->alipay->getPartner(),
             'out_trade_no' => $outTradeNo,
             'subject' => $subject,
-            'payment_type' =>'1',
             'total_fee' => $fee,
         );
         if ($bank) {
             $params['defaultbank'] = $bank;
         }
-        $params = $this->alipay->sortParams($params);
-        $params = $this->alipay->filterParams($params);
-        $sign = $this->alipay->getSigner($signType)->sign($this->alipay->createParamUrl($params));
+        $utils = Utils::getInstance();
+        $params = $utils->sortParams($params);
+        $params = $utils->filterParams($params);
+        $sign = $this->alipay->getSigner($signType)->sign($utils->createParamUrl($params));
         $params['sign'] = $sign;
         $params['sign_type'] = $signType;
-        return $this->gatewayUrl . $this->alipay->createParamUrl($params, true);
+        return $this->gatewayUrl . $utils->createParamUrl($params, true);
     }
 
     /**
@@ -88,15 +89,16 @@ class WebPay
         if (empty($data) || !isset($data['sign']) || !isset($data['sign_type'])) {
             return false;
         }
+        $utils = Utils::getInstance();
         $sign = $data['sign'];
         $signType = $data['sign_type'];
-        $isVerified = $this->alipay->getSigner($signType)->verify($this->alipay->createParamUrl($this->alipay->sortParams($this->alipay->filterParams($data))), $sign);
+        $isVerified = $this->alipay->getSigner($signType)->verify($utils->createParamUrl($utils->sortParams($utils->filterParams($data))), $sign);
         if ($isVerified) {
             if (empty($data['notify_id'])) {
                 return true;
             }
             $verify_url = $this->verifyUrl . "partner=" . $this->alipay->getPartner() . "&notify_id=" . $data["notify_id"];
-            $responseTxt = $this->alipay->getHttpClient()->executeHttpRequest($verify_url);
+            $responseTxt = $utils->getHttpClient()->executeHttpRequest($verify_url);
             return $responseTxt === 'true';
         }
         return false;
