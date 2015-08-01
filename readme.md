@@ -48,11 +48,12 @@ $wapPay = $alipay->createWapPay('out_order_number', 'product_name', '0.01', 'htt
 echo $wapPay->compose(); // 生成支付宝支付URL
 ```
 
-## 手机支付
+## 手机客户端支付
 ```php
-$mobilePay = $alipay->createMobilePay(time(), 'foo', 'body', '0.01', 'http://www.exmaple.com/payNotify');
+$mobilePay = $alipay->createMobilePay('out_order_number', 'foo', 'body', '0.01', 'http://www.exmaple.com/payNotify');
 
-echo $mobilePay->compose();
+// 手机客户端只支持 RSA 签名
+echo $mobilePay->compose(SignerInterface::TYPE_RSA);
 ```
 
 ## 验证 return 或 notify 通知
