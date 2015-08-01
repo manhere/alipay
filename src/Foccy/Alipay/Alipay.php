@@ -5,7 +5,9 @@ namespace Foccy\Alipay;
 
 
 use Foccy\Alipay\Exception\AlipayException;
+use Foccy\Alipay\Pay\PayComposer;
 use Foccy\Alipay\Signer\SignerInterface;
+use Foccy\Alipay\Verifier\Verifier;
 
 class Alipay
 {
@@ -23,13 +25,6 @@ class Alipay
      * @var Signer\SignerInterface[]
      */
     protected $signers = [];
-
-    /**
-     * 支付类实例 WebPay|WapPay
-     *
-     * @var array
-     */
-    protected $payInstances = [];
 
     /**
      * 新建实例
@@ -79,31 +74,95 @@ class Alipay
     }
 
     /**
-     * 获取WebPay实例
+     * PC网页支付
      *
-     * @return WebPay
+     * @param string $outTradeNo
+     * @param string $subject
+     * @param string $fee
+     * @param string $notifyUrl
+     * @param string $returnUrl
+     * @return PayComposer
      */
-    public function getWebPay()
+    public function createWebPay($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl)
     {
-        $key = __METHOD__;
-        if (!isset($this->payInstances[$key])) {
-            $this->payInstances[$key] = new WebPay($this);
-        }
-        return $this->payInstances[$key];
+        $params = array(
+            'service' =>'create_direct_pay_by_user',
+            'payment_type' =>'1',
+            '_input_charset' =>'utf-8',
+            'notify_url' => $notifyUrl,
+            'return_url' => $returnUrl,
+            'out_trade_no' => $outTradeNo,
+            'subject' => $subject,
+            'total_fee' => $fee,
+        );
+        $pay = new PayComposer($this, 'https://mapi.alipay.com/gateway.do?');
+        $pay->add($params);
+        return $pay;
     }
 
     /**
-     * 获取WapPay实例
+     * Wap支付
      *
-     * @return WapPay
+     * @param string $outTradeNo
+     * @param string $subject
+     * @param string $fee
+     * @param string $notifyUrl
+     * @param string $returnUrl
+     * @return PayComposer
      */
-    public function getWapPay()
+    public function createWapPay($outTradeNo, $subject, $fee, $notifyUrl, $returnUrl)
     {
-        $key = __METHOD__;
-        if (!isset($this->payInstances[$key])) {
-            $this->payInstances[$key] = new WapPay($this);
-        }
-        return $this->payInstances[$key];
+        $params = array(
+            'service' =>'alipay.wap.create.direct.pay.by.user',
+            'payment_type' =>'1',
+            '_input_charset' =>'utf-8',
+            'notify_url' => $notifyUrl,
+            'return_url' => $returnUrl,
+            'out_trade_no' => $outTradeNo,
+            'subject' => $subject,
+            'total_fee' => $fee,
+        );
+        $pay = new PayComposer($this, 'https://mapi.alipay.com/gateway.do?');
+        $pay->add($params);
+        return $pay;
+    }
+
+    /**
+     * 客户端支付
+     *
+     * @param string $outTradeNo
+     * @param string $subject
+     * @param string $body
+     * @param string $fee
+     * @param string $notifyUrl
+     * @return PayComposer
+     */
+    public function createMobilePay($outTradeNo, $subject, $body, $fee, $notifyUrl)
+    {
+        $params = array(
+            'service' =>'mobile.securitypay.pay',
+            'payment_type' =>'1',
+            '_input_charset' =>'utf-8',
+            'notify_url' => $notifyUrl,
+            'out_trade_no' => $outTradeNo,
+            'subject' => $subject,
+            'body' => $body,
+            'total_fee' => $fee,
+        );
+        $pay = new PayComposer($this);
+        $pay->add($params);
+        return $pay;
+    }
+
+    /**
+     * 生成支付通知验证实例
+     *
+     * @param array $params
+     * @return Verifier
+     */
+    public function createVerifier(array $params)
+    {
+        return new Verifier($this, $params);
     }
 
     /**

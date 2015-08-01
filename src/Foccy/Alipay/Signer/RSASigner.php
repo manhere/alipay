@@ -6,10 +6,26 @@ namespace Foccy\Alipay\Signer;
 class RSASigner implements SignerInterface
 {
 
+    /**
+     * The path for partner private key path.
+     *
+     * @var string
+     */
     protected $partnerKeyPath;
 
+    /**
+     * The path for alipay public key path.
+     *
+     * @var string
+     */
     protected $alipayKeyPath;
 
+    /**
+     * Constructor.
+     *
+     * @param string $partnerKeyPath
+     * @param string $alipayKeyPath
+     */
     public function __construct($partnerKeyPath, $alipayKeyPath)
     {
         $this->partnerKeyPath = $partnerKeyPath;
