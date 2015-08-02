@@ -3,17 +3,19 @@ use Foccy\Alipay\Alipay;
 use Foccy\Alipay\Signer\MD5Signer;
 use Foccy\Alipay\Signer\RSASigner;
 
-$alipay = new Alipay('2088....');
+$alipay = Alipay::create('2008...');
+// 设置默认签名方式
+$alipay->setDefaultSignType(SignerInterface::TYPE_RSA);;
 
 ```
 
-## md5 加密方式
+## md5 签名方式
 ```php
 $md5Signer = new MD5Signer('a2d9bm4jfk0slemvpaq23');
 $alipay->addSigner($md5Signer);
 ```
 
-## rsa 加密方式
+## rsa 签名方式
 ```php
 $rsaSigner = new RSASigner(__DIR__ . '/my_private_key', __DIR__ . '/alipay_pub_key');
 $alipay->addSigner($rsaSigner);
@@ -35,7 +37,7 @@ $webPay->set('defaultbank', 'CMB');
 echo $webPay->compose(); // 生成通过支付宝跳转到网银支付URL
 ```
 
-### 以RSA加密方式生成支付URL
+### 以RSA签名方式生成支付URL
 ```php
 use Foccy\Alipay\Signer\SignerInterface;
 echo $webPay->compose(SignerInterface::TYPE_RSA);

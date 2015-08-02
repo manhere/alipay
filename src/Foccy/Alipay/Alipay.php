@@ -27,6 +27,13 @@ class Alipay
     protected $signers = [];
 
     /**
+     * The default sign type for the payment to be composed.
+     *
+     * @var string
+     */
+    protected $defaultSignType;
+
+    /**
      * 新建实例
      *
      * @param string $partner
@@ -61,6 +68,28 @@ class Alipay
             return $this->signers[$signType];
         }
         throw new AlipayException(sprintf('Signer type [%s] not found.', $signType));
+    }
+
+    /**
+     * Set the default sign type.
+     *
+     * @param string $signType
+     * @return $this
+     */
+    public function setDefaultSignType($signType)
+    {
+        $this->defaultSignType = $signType;
+        return $this;
+    }
+
+    /**
+     * Get the default sign type.
+     *
+     * @return string
+     */
+    public function getDefaultSignType()
+    {
+        return $this->defaultSignType;
     }
 
     /**
@@ -170,11 +199,13 @@ class Alipay
      *
      * @param string $partner
      * @param array $signers
+     * @param string $defaultSignType
      * @return static
      */
-    public static function create($partner, $signers = [])
+    public static function create($partner, $signers = [], $defaultSignType = SignerInterface::TYPE_MD5)
     {
         $alipay = new static($partner);
+        $alipay->defaultSignType = $defaultSignType;
         foreach ((array)$signers as $signer) {
             $alipay->addSigner($signer);
         }

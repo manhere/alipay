@@ -46,11 +46,14 @@ class PayComposer
     /**
      * Create a payment url.
      *
-     * @param string $signType
+     * @param null|string $signType
      * @return string string
      */
-    public function compose($signType = SignerInterface::TYPE_MD5)
+    public function compose($signType = null)
     {
+        if (is_null($signType)) {
+            $signType = $this->alipay->getDefaultSignType();
+        }
         $params = array_merge($this->params, [
             'partner' => $this->alipay->getPartner(),
             'seller_id' => $this->alipay->getPartner(),
