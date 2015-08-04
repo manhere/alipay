@@ -1,6 +1,13 @@
 {
   "name": "foccy/alipay",
   "description": "Alipay payment library.",
+  "type": "library",
+  "authors": [
+    {
+      "name": "foccy",
+      "email": "me@foccy.com"
+    }
+  ],
   "require": {
     "php": ">=5.4.0"
   },
