@@ -19,11 +19,12 @@ $alipay->addSigner($rsaSigner);
 use Foccy\Alipay\Alipay;
 use Foccy\Alipay\Signer\SignerInterface;
 
-// 生成 Alipay 实例，签名方式包括MD5和RSA，默认MD5方式签名
+// 生成 Alipay 实例，签名方式包括`md5`和`rsa`，默认`md5`方式签名
 $alipay = Alipay::create('2008...', [$md5Signer, $rsaSigner], SignerInterface::TYPE_MD5);
 ```
 
 ### PC网页支付
+对应支付宝接口服务名 `create_direct_pay_by_user`
 ```php
 $webPay = $alipay->createWebPay('out_order_number', 'product_name', '0.01', 'http://www.example.com/payNotify', 'http://www.example.com/payReturn');
 
@@ -39,6 +40,7 @@ echo $webPay->compose(SignerInterface::TYPE_RSA);
 ```
 
 ### WAP网页支付
+对应支付宝接口服务名 `alipay.wap.create.direct.pay.by.user`
 ```php
 $wapPay = $alipay->createWapPay('out_order_number', 'product_name', '0.01', 'http://www.example.com/payNotify', 'http://www.example.com/payReturn');
 
@@ -46,6 +48,7 @@ echo $wapPay->compose(); // 生成支付宝支付URL
 ```
 
 ### 手机客户端支付
+对应支付宝接口服务名 `mobile.securitypay.pay`
 ```php
 $mobilePay = $alipay->createMobilePay('out_order_number', 'foo', 'body', '0.01', 'http://www.exmaple.com/payNotify');
 
